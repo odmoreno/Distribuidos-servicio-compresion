@@ -1,0 +1,7 @@
+1. primero correr en consola
+node rpc_server.js
+
+2. luego
+node rpc_client.js
+
+Se puede tener varias instancias tanto del server como del client corriendo los scripts en consolas diferentes.
