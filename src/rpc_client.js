@@ -2,12 +2,16 @@
 
 var amqp = require('amqplib/callback_api');
 var path = require('path');
-/*var args = process.argv.slice(2);
+var args = process.argv.slice(2);
 
 if (args.length === 0) {
-  console.log("Usage: rpc_client.js num");
+  console.log("Usage: rpc_client.js prioridad");
   process.exit(1);
-}*/
+}
+queuePriority="Low"
+if(args[0]=="alta"){
+  queuePriority="High"
+}
 
 amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.cloudamqp.com/hfmlwsqw', function(err, conn) {
   conn.createChannel(function(err, ch) {
@@ -24,7 +28,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         }
       }, {noAck: true});
 
-      ch.sendToQueue('rpc_queue',
+      ch.sendToQueue(queuePriority,
         new Buffer(file),
         { correlationId: corr, replyTo: q.queue });
     });
