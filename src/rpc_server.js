@@ -34,10 +34,13 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
     console.log(' [x] Esperando requests de baja prioridad');
     ch.consume(q, function reply(msg) {
       console.log(' [x] Archivo de baja prioridad obtenido');
-      zip.file('file_compressed', fs.readFileSync(msg.content.toString()));
+      zip.file("file.txt",msg.content);
       var data = zip.generate({ base64:false, compression: 'DEFLATE' });
       // it's important to use *binary* encode
-      //fs.writeFileSync('file_compressed.zip', data, 'binary');
+      fs.writeFileSync('file_compressed.zip', data, 'binary');
+      /*var zipFilePath=''+path.join(__dirname, 'file_compressed.zip');
+      var bufferArchZip=fs.readFileSync(zipFilePath);
+      console.log(bufferArchZip);*/
       var r = "Archivo de baja prioridad comprimido con éxito";
       ch.sendToQueue(msg.properties.replyTo,
         new Buffer(r.toString()),
