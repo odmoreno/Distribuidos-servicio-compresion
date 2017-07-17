@@ -21,11 +21,13 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
       var corr = generateUuid();
       console.log(' [x] Enviando archivo');
       var arch = ''+path.join(__dirname, 'file1.txt');
-      console.log(arch);
       var bufferArch=fs.readFileSync(arch);
       ch.consume(q.queue, function(msg) {
         if (msg.properties.correlationId === corr) {
-          console.log(' [.] %s',msg.content.toString() );
+          //fs.rename(""+msg.content,''+path.join(__dirname, 'file1.zip'));
+          //se descarga el archivo
+          fs.writeFileSync('file_compressed.zip', msg.content, 'binary');
+          console.log(' [.] Archivo comprimido con éxito');
           setTimeout(function() { conn.close(); process.exit(0) }, 500);
         }
       }, {noAck: true});
