@@ -1,0 +1,3 @@
+para probar multiples script ejecutar "test.py"
+ve al terminal y escribe:
+C:\Python27\python.exe C:/Users/pc/Documents/Repos/Distribuidos-servicio-compresion/test.py
