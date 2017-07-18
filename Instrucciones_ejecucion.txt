@@ -1,7 +1,7 @@
-1. primero correr en consola
+1. Abrir un terminal y escribir
 node rpc_server.js
 
-2. luego
+2. Abrir otra terminal y escribir
 node rpc_client.js alta �
 node rpc_client.js baja
 
