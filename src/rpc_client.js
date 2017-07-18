@@ -13,6 +13,8 @@ if (args.length === 0) {
 queuePriority="Low"
 if(args[0]=="alta"){
   queuePriority="High"
+}else{
+  queuePriority="Low"
 }
 
 amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.cloudamqp.com/hfmlwsqw', function(err, conn) {
