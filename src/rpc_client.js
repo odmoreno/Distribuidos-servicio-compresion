@@ -7,13 +7,14 @@ var zip = new require('node-zip')();
 var args = process.argv.slice(2);
 idDelete="";
 idRead="";
-
+queuePriority="Low"
 corr = generateUuid();
+
 if (args.length === 0) {
   console.log("Usage: rpc_client.js prioridad");
   process.exit(1);
 }
-queuePriority="Low"
+
 if(args[0]=="delete"){
   queuePriority="High";
   idDelete=args[1];
@@ -25,7 +26,7 @@ if(args[0]=="delete"){
 }else if (args[0]=="read"){
   queuePriority="Normal";
   idRead=args[1];
-  mensaje="[x] Enviando archivo a leer con id: "+idRead
+  mensaje="[x] Enviando a leer el archivo con id: "+idRead
 }
 else{
   console.log("Se equivoco al escribir, intente de nuevo...");
@@ -42,17 +43,17 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         ch.consume(q.queue, function(msg) {
           if (msg.properties.correlationId === corr) {
             if(msg.content.toString()==corr){
-              console.log("Archivo con id %s no comprimido ",corr);
+              console.log(" [.] Archivo con ID %s no comprimido ",corr);
             }else{
               fs.writeFileSync('file_compressed.zip', msg.content, 'binary');
-              console.log(' [.] Archivo con id %s comprimido con éxito',corr);
+              console.log(' [.] Archivo con ID %s comprimido con éxito',corr);
             }
             setTimeout(function() { conn.close(); process.exit(0) }, 500);
           }
         }, {noAck: true});
         ch.sendToQueue(queuePriority,
           new Buffer(bufferArch),
-          { correlationId: corr, replyTo: q.queue});
+          { correlationId: corr, replyTo: q.queue,headers:{nameFile:"file1.txt"}});
       }
       else if(queuePriority=="High"){
         ch.consume(q.queue, function(msg) {
@@ -64,6 +65,24 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         ch.sendToQueue('High',
         new Buffer(idDelete),
         { correlationId: corr, replyTo: q.queue });
+      }else{
+        ch.consume('Consulta', function(msg) {
+          if (msg.properties.correlationId == corr) {
+            if(msg.properties.headers.exist){
+              console.log(" [.] La información del archivo con ID:"+msg.content.toString()+" es ");
+              console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
+              console.log("Fecha de creación: "+msg.properties.headers.resultQuery.fechaDeCreacion);
+            }
+            else{
+              console.log("No existe el archivo con ID:"+msg.content.toString());
+            }
+
+            setTimeout(function() { conn.close(); process.exit(0) }, 500);
+          }
+        }, {noAck: true});
+        ch.sendToQueue('Consulta',
+        new Buffer(idRead),
+        { correlationId: corr, replyTo: 'Consulta' });
       }
     });
   });
