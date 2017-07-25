@@ -15,10 +15,10 @@ if (args.length === 0) {
   process.exit(1);
 }
 
-if(args[0]=="delete"){
+if(args[0]=="cancel"){
   queuePriority="High";
   idDelete=args[1];
-  mensaje="[x] Enviando archivo a borrar con id: "+idDelete;
+  mensaje="[x] Enviando archivo a cancelar con id: "+idDelete;
 }else if(args[0]=="create"){
   queuePriority="Low";
   mensaje='[x] Enviando archivo con id: '+corr;

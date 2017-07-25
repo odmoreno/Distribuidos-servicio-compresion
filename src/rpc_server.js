@@ -18,12 +18,12 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
     ch.prefetch(1);
     console.log(' [x] Esperando requests de alta prioridad');
     ch.consume(q, function reply(msg) {
-      console.log(' [.] Archivo a borrar obtenido');
+      console.log(' [.] Archivo a cancelar obtenido');
       idFile = msg.content.toString();
       idClientDelete=msg.properties.correlationId;
       queueDelete=msg.properties.replyTo;
       ch.sendToQueue(queueDelete,
-        new Buffer(" [.] Archivo borrado exitosamente"),
+        new Buffer(" [.] Archivo cancelado exitosamente"),
         {correlationId: idClientDelete});
         ch.ack(msg);
     });
