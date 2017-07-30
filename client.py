@@ -58,7 +58,7 @@ class CompressionClient(object):
               #buffer archivo
               #file = BUFFER(filename)
               arch = fs.abspath(fs.cwd()+'/'+filename.replace(' ',''))
-              file = arch
+              file = fs.read(arch)
             elif task == "read":
               queuePriority = "Consulta"
               idRead = idTask
