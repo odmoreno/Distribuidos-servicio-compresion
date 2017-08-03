@@ -45,8 +45,8 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
             if(msg.content.toString()==corr){
               console.log(" [.] Archivo con ID %s no comprimido ",corr);
             }else{
-              fs.writeFileSync('file_compressed.zip', msg.content, 'binary');
               console.log(' [.] Archivo con ID %s comprimido con éxito',corr);
+              console.log('URL: '+msg.content.toString());
             }
             setTimeout(function() { conn.close(); process.exit(0) }, 500);
           }
@@ -72,6 +72,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
               console.log(" [.] La información del archivo con ID:"+msg.content.toString()+" es ");
               console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
               console.log("Fecha de creación: "+msg.properties.headers.resultQuery.fechaDeCreacion);
+              console.log("URL: "+msg.properties.headers.resultQuery.link);
             }
             else{
               console.log("No existe el archivo con ID:"+msg.content.toString());

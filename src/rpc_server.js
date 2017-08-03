@@ -10,7 +10,19 @@ client.on('connect', function() {
     console.log(' [.] Conectado a REDIS BD');
 });
 idFile="";
+var cloudinary = require('cloudinary');
 
+var cloudinaryCredentials = {
+  cloud_name: 'dsqpicprf',
+  api_key:    '259691129854149',
+  api_secret: 'jNwDkTwnkXaCzkbdwy6WrqOS8ik'
+};
+
+cloudinary.config({
+  cloud_name: cloudinaryCredentials.cloud_name,
+  api_key:    cloudinaryCredentials.api_key,
+  api_secret: cloudinaryCredentials.api_secret
+});
 amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.cloudamqp.com/hfmlwsqw', function(err, conn) {
   conn.createChannel(function(err, ch) {
     var q = 'High';
@@ -42,18 +54,22 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
             ch.ack(msg);
         }
         else{
-          client.hmset(""+msg.properties.correlationId, {
-              'nombre': ""+msg.properties.headers.nameFile,
-              'fechaDeCreacion':new Date()
-          });
           console.log(' [.] Archivo a comprimir obtenido');
           zip.file("file.txt",msg.content);
           var data = zip.generate({ base64:false, compression: 'DEFLATE' });
-          ch.sendToQueue(msg.properties.replyTo,
-            new Buffer(data),
-            {correlationId: msg.properties.correlationId});
-          ch.ack(msg);
-        }
+          fileC=fs.writeFileSync('file_compressed.zip',data, 'binary');
+            cloudinary.v2.uploader.upload('file_compressed.zip', {resource_type: "raw"},function(error,result){
+              client.hmset(""+msg.properties.correlationId, {
+                  'nombre': ""+msg.properties.headers.nameFile,
+                  'fechaDeCreacion':new Date(),
+                  'link':result.url
+              });
+              ch.sendToQueue(msg.properties.replyTo,
+                new Buffer(result.url),
+                {correlationId: msg.properties.correlationId});
+                ch.ack(msg);
+            })
+          }
       }, 10000);
     });
   });
