@@ -1,55 +1,50 @@
-# Node.js code for RabbitMQ tutorials
+# Servicio de compresión en la nube 
+- Se implementó con la ayuda del middleware RabbitMQ.
+- El lenguaje utilizado para el servidor es javascript.
+- Los lenguajes utilizados para los clientes son javascript y python
 
-Here you can find JavaScript (Node) code examples from [RabbitMQ
-tutorials](http://www.rabbitmq.com/getstarted.html).
+## Requisitos
+Tener instalado python y node.js en la computadora cliente.
+Tener instalado python y node.js en la computadora servidor.
+Tener una conexión estable a internet.
 
-To successfully use the examples you will need a running RabbitMQ server.
-
-## Requirements
-
-### Node.js
-
-You need [Node.js](https://nodejs.org/en/download/) and [amqp.node](https://github.com/squaremo/amqp.node)
-to run these tutorials.
-
-
-### Client Library
-
-To install `amqp.node` using npm:
-
-    npm install amqplib -g
-
-## Code
-
-[Tutorial one: "Hello World!"](http://www.rabbitmq.com/tutorials/tutorial-one-javascript.html):
-
-    node src/send.js
-    node src/receive.js
+## Ejecución de Servidores
+###Node.js
 
 
-[Tutorial two: Work Queues](http://www.rabbitmq.com/tutorials/tutorial-two-javascript.html):
+## Ejecución de Clientes
 
-    node src/new_task.js "A very hard task which takes two seconds.."
-    node src/worker.js
+###Node.js-Javascript
+
+###Create job
+Escribir en la terminal:
+	node rpc_client.js create
+
+###Read job
+Escribir en la terminal:
+	node rpc_client.js read idFile
+
+###Cancel job
+Escribir en la terminal:
+	node rpc_client.js cancel idFile
 
 
-[Tutorial three: Publish/Subscribe](http://www.rabbitmq.com/tutorials/tutorial-three-javascript.html)
+###Python
 
-    node src/receive_logs.js
-    node src/emit_log.js "info: This is the log message"
+###Create job
+Escribir en la terminal:
+	python client.js create 
 
-[Tutorial four: Routing](http://www.rabbitmq.com/tutorials/tutorial-four-javascript.html):
+###Read job
+Escribir en la terminal:
+	python client.js read idFile
 
-    node src/receive_logs_direct.js info
-    node src/emit_log_direct.js info "The message"
+###Cancel job
+Escribir en la terminal:
+	python client.js cancel idFile
 
+## Ejecución de Servidor
+###Node.js-Javascript
+Escribir en la terminal:
+	node rpc_server.js 
 
-[Tutorial five: Topics](http://www.rabbitmq.com/tutorials/tutorial-five-javascript.html):
-
-    node src/receive_logs_topic.js "*.rabbit"
-    node src/emit_log_topic.js red.rabbit Hello
-
-[Tutorial six: RPC](http://www.rabbitmq.com/tutorials/tutorial-six-javascript.html):
-
-    node src/rpc_server.js
-    node src/rpc_client.js
