@@ -32,6 +32,9 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
     ch.consume(q, function reply(msg) {
       console.log(' [.] Archivo a cancelar obtenido');
       idFile = msg.content.toString();
+      client.hmset(idFile, {
+            'borrado':true
+        });
       idClientDelete=msg.properties.correlationId;
       queueDelete=msg.properties.replyTo;
       ch.sendToQueue(queueDelete,
@@ -47,29 +50,31 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
     console.log(' [x] Esperando requests de baja prioridad');
     ch.consume(q, function reply(msg) {
       setTimeout(function(){
-        if(msg.properties.correlationId==idFile){
-          ch.sendToQueue(msg.properties.replyTo,
-            new Buffer(idFile),
-            {correlationId: msg.properties.correlationId});
-            ch.ack(msg);
-        }
-        else{
-          console.log(' [.] Archivo a comprimir obtenido');
-          zip.file("file.txt",msg.content);
-          var data = zip.generate({ base64:false, compression: 'DEFLATE' });
-          fileC=fs.writeFileSync('file_compressed.zip',data, 'binary');
-            cloudinary.v2.uploader.upload('file_compressed.zip', {resource_type: "raw"},function(error,result){
-              client.hmset(""+msg.properties.correlationId, {
-                  'nombre': ""+msg.properties.headers.nameFile,
-                  'fechaDeCreacion':new Date(),
-                  'link':result.url
-              });
+          client.exists(msg.properties.correlationId, function(err, reply) {
+            if (reply === 1) {
               ch.sendToQueue(msg.properties.replyTo,
-                new Buffer(result.url),
-                {correlationId: msg.properties.correlationId});
+                new Buffer(msg.properties.correlationId),
+                {correlationId: msg.properties.correlationId,});
                 ch.ack(msg);
-            })
-          }
+            }
+            else{
+              console.log(' [.] Archivo a comprimir obtenido');
+              zip.file("file.txt",msg.content);
+              var data = zip.generate({ base64:false, compression: 'DEFLATE' });
+              fileC=fs.writeFileSync('file_compressed.zip',data, 'binary');
+                cloudinary.v2.uploader.upload('file_compressed.zip', {resource_type: "raw"},function(error,result){
+                  client.hmset(""+msg.properties.correlationId, {
+                      'nombre': ""+msg.properties.headers.nameFile,
+                      'fechaDeCreacion':new Date(),
+                      'link':result.url
+                  });
+                  ch.sendToQueue(msg.properties.replyTo,
+                    new Buffer(result.url),
+                    {correlationId: msg.properties.correlationId});
+                    ch.ack(msg);
+                })
+            }
+          })
       }, 10000);
     });
   });
@@ -94,9 +99,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
               {correlationId: msg.properties.correlationId,headers:{exist:false}});
           }
       });
-
-
-        ch.ack(msg);
+      ch.ack(msg);
     });
   });
 });
