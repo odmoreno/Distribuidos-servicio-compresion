@@ -10,6 +10,7 @@ client.on('connect', function() {
     console.log(' [.] Conectado a REDIS BD');
 });
 idFile="";
+message="";
 var cloudinary = require('cloudinary');
 
 var cloudinaryCredentials = {
@@ -32,15 +33,38 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
     ch.consume(q, function reply(msg) {
       console.log(' [.] Archivo a cancelar obtenido');
       idFile = msg.content.toString();
-      client.hmset(idFile, {
-            'borrado':true
-        });
       idClientDelete=msg.properties.correlationId;
       queueDelete=msg.properties.replyTo;
-      ch.sendToQueue(queueDelete,
-        new Buffer(" [.] Archivo cancelado exitosamente"),
-        {correlationId: idClientDelete});
-        ch.ack(msg);
+      client.exists(idFile, function(err, reply) {
+        if (reply === 1) {
+          client.hgetall(idFile, function(err, object) {
+            if(object.cancelado){
+              message=" [.] Trabajo ya fue cancelado";
+              ch.sendToQueue(queueDelete,
+                new Buffer(message),
+                {correlationId: idClientDelete});
+                ch.ack(msg);
+            }
+            else{
+              message=" [.] Trabajo ya fue comprimido";
+              ch.sendToQueue(queueDelete,
+                new Buffer(message),
+                {correlationId: idClientDelete});
+                ch.ack(msg);
+            }
+          })
+        }
+        else{
+          client.hmset(idFile, {
+                'cancelado':true
+            });
+          message=" [.] Trabajo cancelado con éxito"
+          ch.sendToQueue(queueDelete,
+            new Buffer(message),
+            {correlationId: idClientDelete});
+            ch.ack(msg);
+        }
+      })
     });
   });
   conn.createChannel(function(err, ch) {
@@ -66,7 +90,8 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
                   client.hmset(""+msg.properties.correlationId, {
                       'nombre': ""+msg.properties.headers.nameFile,
                       'fechaDeCreacion':new Date(),
-                      'link':result.url
+                      'link':result.url,
+                      'cancelado':false
                   });
                   ch.sendToQueue(msg.properties.replyTo,
                     new Buffer(result.url),

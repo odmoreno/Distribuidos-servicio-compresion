@@ -64,7 +64,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         }, {noAck: true});
         ch.sendToQueue('High',
         new Buffer(idDelete),
-        { correlationId: corr, replyTo: q.queue });
+        { correlationId: corr, replyTo: q.queue, headers:{cancelado:true}});
       }else{
         ch.consume(q.queue, function(msg) {
           if (msg.properties.correlationId == corr) {
@@ -73,6 +73,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
               console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
               console.log("Fecha de creación: "+msg.properties.headers.resultQuery.fechaDeCreacion);
               console.log("URL: "+msg.properties.headers.resultQuery.link);
+              console.log("Cnacelado: "+msg.properties.headers.resultQuery.cancelado);
             }
             else{
               console.log("No existe el archivo con ID:"+msg.content.toString());
