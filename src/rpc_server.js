@@ -84,22 +84,23 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
     ch.prefetch(1);
     console.log(' [x] Esperando requests de consultas');
     ch.consume(q, function reply(msg) {
-      idFile=msg.content.toString();
-      console.log(" [.] Archivo con ID: %s a leer obtenido",idFile);
-      client.exists(idFile, function(err, reply) {
-          if (reply === 1) {
-            client.hgetall(idFile, function(err, object) {
-                ch.sendToQueue(msg.properties.replyTo,
-                  new Buffer(idFile),
-                  {correlationId: msg.properties.correlationId,headers:{resultQuery:object,exist:true}});
-            });
-          } else {
-            ch.sendToQueue(msg.properties.replyTo,
-              new Buffer(idFile),
-              {correlationId: msg.properties.correlationId,headers:{exist:false}});
-          }
-      });
-      ch.ack(msg);
+        idFile=msg.content.toString();
+        console.log(" [.] Archivo con ID: %s a leer obtenido",idFile);
+        client.exists(idFile, function(err, reply) {
+            if (reply === 1) {
+              client.hgetall(idFile, function(err, object) {
+                  ch.sendToQueue(msg.properties.replyTo,
+                    new Buffer(idFile),
+                    {correlationId: msg.properties.correlationId,headers:{resultQuery:object,exist:true}});
+                    ch.ack(msg);
+              });
+            } else {
+              ch.sendToQueue(msg.properties.replyTo,
+                new Buffer(idFile),
+                {correlationId: msg.properties.correlationId,headers:{exist:false}});
+                ch.ack(msg);
+            }
+        });
     });
   });
 });

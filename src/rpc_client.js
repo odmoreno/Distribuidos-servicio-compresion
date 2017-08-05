@@ -66,7 +66,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         new Buffer(idDelete),
         { correlationId: corr, replyTo: q.queue });
       }else{
-        ch.consume('Consulta', function(msg) {
+        ch.consume(q.queue, function(msg) {
           if (msg.properties.correlationId == corr) {
             if(msg.properties.headers.exist){
               console.log(" [.] La información del archivo con ID:"+msg.content.toString()+" es ");
@@ -83,7 +83,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         }, {noAck: true});
         ch.sendToQueue('Consulta',
         new Buffer(idRead),
-        { correlationId: corr, replyTo: 'Consulta' });
+        { correlationId: corr, replyTo: q.queue });
       }
     });
   });
