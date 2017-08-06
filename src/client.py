@@ -8,20 +8,26 @@ import sys
 import fs
 
 def validaciones(argv):
-  task=""
+  task="none"
   file=""
   idTask=""
-  if len(argv) != 2:
-    print(" [x] Número incorrecto de argumentos. Deben de ser 2.")
-  else:
-    task = argv[1]
+  try:
+    task = ''.join(argv[1])
     if task in ["create","read","cancel"]:
       if task == "create":
-        file = ' '.join(argv[2])
+        try:
+          file = ''.join(argv[2])
+        except:
+          file = "none"
       else:
-        idTask = ' '.join(argv[2])
+        try:
+          idTask = ''.join(argv[2])
+        except:
+          idTask = "none"
     else:
       print(" [.] No existe la tarea con el nombre " + task)
+  except:
+    print(" [x] Número incorrecto de argumentos. Deben de ser 2.")
   return task, idTask, file
   
 class CompressionClient(object):
@@ -112,10 +118,9 @@ class CompressionClient(object):
 
 ############################################################
 compression_rpc = CompressionClient()
-
 task, idTask, file = validaciones(sys.argv)
-if task == "":
-  response = 0
+if idTask== "none" or file == "none":
+  print(" [x] Número incorrecto de argumentos. Deben de ser 2.")
 else:
   response = compression_rpc.call(task, idTask, file)
 print("DONE")
