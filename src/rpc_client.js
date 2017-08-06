@@ -11,22 +11,32 @@ queuePriority="Low"
 corr = generateUuid();
 
 if (args.length === 0) {
-  console.log("Usage: rpc_client.js prioridad");
+  console.log("Uso: rpc_client.js create\nUso: rpc_client.js read <idFile>\nUso: rpc_client.js cancel <idFile>");
   process.exit(1);
 }
 
 if(args[0]=="cancel"){
   queuePriority="High";
   idDelete=args[1];
-  mensaje="[x] Enviando archivo a cancelar con id: "+idDelete;
+  if(idDelete == undefined){
+    console.log("Ingrese ID válido (3 dígitos)...");
+    process.exit(1);
+  }else{
+    mensaje="[x] Enviando archivo a cancelar con id: "+idDelete;
+  }
 }else if(args[0]=="create"){
   queuePriority="Low";
   mensaje='[x] Enviando archivo con id: '+corr;
   //borrado="false";
 }else if (args[0]=="read"){
-  queuePriority="Normal";
+  queuePriority="Consulta";
   idRead=args[1];
-  mensaje="[x] Enviando a leer el archivo con id: "+idRead
+  if(idRead == undefined){
+    console.log("Ingrese ID válido (3 dígitos)...");
+    process.exit(1);
+  }else{
+    mensaje="[x] Enviando a leer el archivo con id: "+idRead
+  }
 }
 else{
   console.log("Se equivoco al escribir, intente de nuevo...");
@@ -64,16 +74,22 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         }, {noAck: true});
         ch.sendToQueue('High',
         new Buffer(idDelete),
-        { correlationId: corr, replyTo: q.queue});
+        { correlationId: corr, replyTo: q.queue,headers:{nameFile:"file1.txt"}});
       }else{
         ch.consume(q.queue, function(msg) {
           if (msg.properties.correlationId == corr) {
             if(msg.properties.headers.exist){
-              console.log(" [.] La información del archivo con ID:"+msg.content.toString()+" es ");
-              console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
-              console.log("Fecha de creación: "+msg.properties.headers.resultQuery.fechaDeCreacion);
-              console.log("URL: "+msg.properties.headers.resultQuery.link);
-              console.log("Cancelado: "+msg.properties.headers.resultQuery.cancelado);
+              console.log(" [.] La información del archivo con ID:"+msg.content.toString()+" es:");
+              if(msg.properties.headers.resultQuery.cancelado=='false'){
+                console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
+                console.log("Fecha de creación: "+msg.properties.headers.resultQuery.fechaDeCreacion);
+                console.log("URL: "+msg.properties.headers.resultQuery.link);
+                console.log("Cancelado: "+msg.properties.headers.resultQuery.cancelado);
+              }
+              else{
+                console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
+                console.log("Cancelado: "+msg.properties.headers.resultQuery.cancelado);
+              }
             }
             else{
               console.log("No existe el archivo con ID:"+msg.content.toString());

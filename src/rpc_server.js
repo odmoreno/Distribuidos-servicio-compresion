@@ -19,6 +19,22 @@ var cloudinaryCredentials = {
   api_secret: 'jNwDkTwnkXaCzkbdwy6WrqOS8ik'
 };
 
+function returnCurrentDate(){
+  var today = new Date();
+  var dd = today.getDate();
+  var mm = today.getMonth()+1; //January is 0!
+  var h = today.getHours();
+  var m= today.getMinutes()
+  var yyyy = today.getFullYear();
+  if(dd<10){
+      dd='0'+dd;
+  }
+  if(mm<10){
+      mm='0'+mm;
+  }
+  return dd+'/'+mm+'/'+yyyy+' '+h+':'+m;
+}
+
 cloudinary.config({
   cloud_name: cloudinaryCredentials.cloud_name,
   api_key:    cloudinaryCredentials.api_key,
@@ -38,7 +54,8 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
       client.exists(idFile, function(err, reply) {
         if (reply === 1) {
           client.hgetall(idFile, function(err, object) {
-            if(object.cancelado){
+            if(object.cancelado=='true'){
+              console.log("cond: "+object.cancelado);
               message=" [.] Trabajo ya fue cancelado";
               ch.sendToQueue(queueDelete,
                 new Buffer(message),
@@ -56,7 +73,8 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         }
         else{
           client.hmset(idFile, {
-                'cancelado':true
+                'cancelado':true,
+                'nombre': ""+msg.properties.headers.nameFile
             });
           message=" [.] Trabajo cancelado con éxito"
           ch.sendToQueue(queueDelete,
@@ -89,7 +107,7 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
                 cloudinary.v2.uploader.upload('file_compressed.zip', {resource_type: "raw"},function(error,result){
                   client.hmset(""+msg.properties.correlationId, {
                       'nombre': ""+msg.properties.headers.nameFile,
-                      'fechaDeCreacion':new Date(),
+                      'fechaDeCreacion':returnCurrentDate(),
                       'link':result.url,
                       'cancelado':false
                   });

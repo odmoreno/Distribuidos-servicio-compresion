@@ -29,7 +29,7 @@ def validaciones(argv):
   except:
     print(" [x] Número incorrecto de argumentos. Deben de ser 2.")
   return task, idTask, file
-  
+
 class CompressionClient(object):
     def __init__(self):
         logging.basicConfig()
@@ -61,10 +61,15 @@ class CompressionClient(object):
               print(" [.] URL "+body)
           elif self.task == "read":
             if props.headers['exist']:
-              print(" [.] La información del archivo con ID:"+ body + " es:")
-              print( "Nombre: "+props.headers['resultQuery']['nombre'])
-              print("Fecha de creación: "+str(props.headers['resultQuery']['fechaDeCreacion']))
-              print("URL: "+props.headers['resultQuery']['link'])
+                print(" [.] La información del archivo con ID:"+ body + " es:")
+                if props.headers['resultQuery']['cancelado']=="true":
+                    print("Nombre: "+str(props.headers['resultQuery']['nombre']))
+                    print("Cancelado: "+str(props.headers['resultQuery']['cancelado']))
+                else:
+                    print("Nombre: "+str(props.headers['resultQuery']['nombre']))
+                    print("Fecha de creación: "+str(props.headers['resultQuery']['fechaDeCreacion']))
+                    print("URL: "+props.headers['resultQuery']['link'])
+                    print("Cancelado: "+str(props.headers['resultQuery']['cancelado']))
           else:
             print(body)
           self.response = body
@@ -109,12 +114,13 @@ class CompressionClient(object):
                                    properties=pika.BasicProperties(
                                          reply_to = self.callback_queue,
                                          correlation_id = self.corr_id,
+                                         headers = {'nameFile': filename.replace(' ','')}
                                          ),
                                    body=idTask.replace(' ',''))
 
         while self.response is None:
             self.connection.process_data_events()
-        return self.response            
+        return self.response
 
 ############################################################
 compression_rpc = CompressionClient()
