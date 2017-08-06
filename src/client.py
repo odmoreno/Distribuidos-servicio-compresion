@@ -7,6 +7,23 @@ import os
 import sys
 import fs
 
+def validaciones(argv):
+  task=""
+  file=""
+  idTask=""
+  if len(argv) != 2:
+    print(" [x] Número incorrecto de argumentos. Deben de ser 2.")
+  else:
+    task = argv[1]
+    if task in ["create","read","cancel"]:
+      if task == "create":
+        file = ' '.join(argv[2])
+      else:
+        idTask = ' '.join(argv[2])
+    else:
+      print(" [.] No existe la tarea con el nombre " + task)
+  return task, idTask, file
+  
 class CompressionClient(object):
     def __init__(self):
         logging.basicConfig()
@@ -34,14 +51,14 @@ class CompressionClient(object):
             else:
               ##fs.writeFileSync('file_compressed.zip', body, 'binary');
               #fs.write('file_compressed.zip', body)
-              print " [.] Archivo con ID "+ self.corr_id+ " comprimido con éxito"
-              print " [.] URL "+body
+              print(" [.] Archivo con ID "+ self.corr_id+ " comprimido con éxito")
+              print(" [.] URL "+body)
           elif self.task == "read":
             if props.headers['exist']:
               print(" [.] La información del archivo con ID:"+ body + " es:")
-              print "Nombre: "+props.headers['resultQuery']['nombre']
-              print "Fecha de creación: "+str(props.headers['resultQuery']['fechaDeCreacion'])
-              print "URL: "+props.headers['resultQuery']['link']
+              print( "Nombre: "+props.headers['resultQuery']['nombre'])
+              print("Fecha de creación: "+str(props.headers['resultQuery']['fechaDeCreacion']))
+              print("URL: "+props.headers['resultQuery']['link'])
           else:
             print(body)
           self.response = body
@@ -53,55 +70,52 @@ class CompressionClient(object):
         self.corr_id = str(uuid.uuid4())[:3]
         self.task = task
 
-        if task in ["create","read","cancel"]:
-            if task == "create":
-              queuePriority = "Low"
-              mensaje=' [x] Enviando archivo con id: '+self.corr_id;
-              #buffer archivo
-              #file = BUFFER(filename)
-              arch = fs.abspath(fs.cwd()+'/'+filename.replace(' ',''))
-              file = fs.read(arch)
-            elif task == "read":
-              queuePriority = "Consulta"
-              idRead = idTask
-              mensaje=" [x] Enviando a leer el archivo con id: "+idRead.replace(' ','')
-            else:
-              queuePriority = "High"
-              idDelete = idTask
-              mensaje=" [x] Enviando archivo a cancelar con id: "+idDelete.replace(' ','')
-
-            print(mensaje)
-
-            if task == "create":
-              self.channel.basic_publish(exchange='',
-                                       routing_key=queuePriority,
-                                       properties=pika.BasicProperties(
-                                             reply_to = self.callback_queue,
-                                             correlation_id = self.corr_id,
-                                             headers = {'nameFile': filename.replace(' ','')}
-                                             ),
-                                       body=file)
-            else:
-              self.channel.basic_publish(exchange='',
-                                       routing_key=queuePriority,
-                                       properties=pika.BasicProperties(
-                                             reply_to = self.callback_queue,
-                                             correlation_id = self.corr_id,
-                                             ),
-                                       body=idTask.replace(' ',''))
-
-            while self.response is None:
-                self.connection.process_data_events()
-            return self.response
+        if task == "create":
+          queuePriority = "Low"
+          mensaje=' [x] Enviando archivo con id: '+self.corr_id;
+          #buffer archivo
+          #file = BUFFER(filename)
+          arch = fs.abspath(fs.cwd()+'/'+filename.replace(' ',''))
+          file = fs.read(arch)
+        elif task == "read":
+          queuePriority = "Consulta"
+          idRead = idTask
+          mensaje=" [x] Enviando a leer el archivo con id: "+idRead.replace(' ','')
         else:
-            return " [.] no existe task " + task
+          queuePriority = "High"
+          idDelete = idTask
+          mensaje=" [x] Enviando archivo a cancelar con id: "+idDelete.replace(' ','')
+
+        print(mensaje)
+
+        if task == "create":
+          self.channel.basic_publish(exchange='',
+                                   routing_key=queuePriority,
+                                   properties=pika.BasicProperties(
+                                         reply_to = self.callback_queue,
+                                         correlation_id = self.corr_id,
+                                         headers = {'nameFile': filename.replace(' ','')}
+                                         ),
+                                   body=file)
+        else:
+          self.channel.basic_publish(exchange='',
+                                   routing_key=queuePriority,
+                                   properties=pika.BasicProperties(
+                                         reply_to = self.callback_queue,
+                                         correlation_id = self.corr_id,
+                                         ),
+                                   body=idTask.replace(' ',''))
+
+        while self.response is None:
+            self.connection.process_data_events()
+        return self.response            
 
 ############################################################
 compression_rpc = CompressionClient()
 
-print(" [x] Requesting file")
-task = sys.argv[1] if len(sys.argv) > 2 else 'info'
-idTask = ' '.join(sys.argv[2]) or 'info'
-file = ' '.join(sys.argv[3]) or 'info'
-response = compression_rpc.call(task, idTask, file)
-print("Done")
+task, idTask, file = validaciones(sys.argv)
+if task == "":
+  response = 0
+else:
+  response = compression_rpc.call(task, idTask, file)
+print("DONE")
