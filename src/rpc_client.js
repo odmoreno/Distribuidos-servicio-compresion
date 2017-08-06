@@ -19,27 +19,38 @@ if(args[0]=="cancel"){
   queuePriority="High";
   idDelete=args[1];
   if(idDelete == undefined){
-    console.log("Ingrese ID válido (3 dígitos)...");
+    console.log("Ingrese ID válido (3 dígitos).");
     process.exit(1);
   }else{
     mensaje="[x] Enviando archivo a cancelar con id: "+idDelete;
   }
 }else if(args[0]=="create"){
   queuePriority="Low";
-  mensaje='[x] Enviando archivo con id: '+corr;
-  //borrado="false";
+  nameFile=args[1];
+  if(nameFile == undefined){
+    console.log("Ingrese el nombre del archivo.");
+    process.exit(1);
+  }else{
+    if(!fs.existsSync(nameFile)) {
+      console.log("Archivo no encontrado.");
+      process.exit(1);
+    }
+    else {
+    mensaje='[x] Enviando archivo con id: '+corr;
+    }
+  }
 }else if (args[0]=="read"){
   queuePriority="Consulta";
   idRead=args[1];
   if(idRead == undefined){
-    console.log("Ingrese ID válido (3 dígitos)...");
+    console.log("Ingrese ID válido (3 dígitos).");
     process.exit(1);
   }else{
     mensaje="[x] Enviando a leer el archivo con id: "+idRead
   }
 }
 else{
-  console.log("Se equivoco al escribir, intente de nuevo...");
+  console.log("Se equivoco al escribir, intente de nuevo.");
   return;
 }
 
@@ -48,22 +59,21 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
     ch.assertQueue('', {exclusive: true}, function(err, q) {
       console.log(mensaje);
       if(queuePriority=="Low"){
-        var arch = ''+path.join(__dirname, 'file1.txt');
-        var bufferArch=fs.readFileSync(arch);
-        ch.consume(q.queue, function(msg) {
-          if (msg.properties.correlationId === corr) {
-            if(msg.content.toString()==corr){
-              console.log(" [.] Archivo con ID %s no comprimido ",corr);
-            }else{
-              console.log(' [.] Archivo con ID %s comprimido con éxito',corr);
-              console.log('URL: '+msg.content.toString());
+          var bufferArch=fs.readFileSync(nameFile);
+          ch.consume(q.queue, function(msg) {
+            if (msg.properties.correlationId === corr) {
+              if(msg.content.toString()==corr){
+                console.log(" [.] Archivo con ID %s no comprimido ",corr);
+              }else{
+                console.log(' [.] Archivo con ID %s comprimido con éxito',corr);
+                console.log('URL: '+msg.content.toString());
+              }
+              setTimeout(function() { conn.close(); process.exit(0) }, 500);
             }
-            setTimeout(function() { conn.close(); process.exit(0) }, 500);
-          }
-        }, {noAck: true});
-        ch.sendToQueue(queuePriority,
-          new Buffer(bufferArch),
-          { correlationId: corr, replyTo: q.queue,headers:{nameFile:"file1.txt"}});
+          }, {noAck: true});
+          ch.sendToQueue(queuePriority,
+            new Buffer(bufferArch),
+            { correlationId: corr, replyTo: q.queue,headers:{nameFile:nameFile}});
       }
       else if(queuePriority=="High"){
         ch.consume(q.queue, function(msg) {
@@ -74,20 +84,20 @@ amqp.connect('amqp://hfmlwsqw:2zIpQS_S-FRv4A6Qgb1MJx2E0Zxz6PPW@orangutan.rmq.clo
         }, {noAck: true});
         ch.sendToQueue('High',
         new Buffer(idDelete),
-        { correlationId: corr, replyTo: q.queue,headers:{nameFile:"file1.txt"}});
+        { correlationId: corr, replyTo: q.queue,headers:{nameFile:"archivo no comprimido"}});
       }else{
         ch.consume(q.queue, function(msg) {
           if (msg.properties.correlationId == corr) {
-            if(msg.properties.headers.exist){
+            if(msg.properties.headers.exist==true){
               console.log(" [.] La información del archivo con ID:"+msg.content.toString()+" es:");
               if(msg.properties.headers.resultQuery.cancelado=='false'){
-                console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
+                console.log("Archivo comprimido: "+msg.properties.headers.resultQuery.archivoComprimido);
                 console.log("Fecha de creación: "+msg.properties.headers.resultQuery.fechaDeCreacion);
                 console.log("URL: "+msg.properties.headers.resultQuery.link);
                 console.log("Cancelado: "+msg.properties.headers.resultQuery.cancelado);
               }
               else{
-                console.log("Nombre: "+msg.properties.headers.resultQuery.nombre);
+                console.log("Archivo no comprimido: "+msg.properties.headers.resultQuery.archivoComprimido);
                 console.log("Cancelado: "+msg.properties.headers.resultQuery.cancelado);
               }
             }

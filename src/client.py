@@ -14,16 +14,17 @@ def validaciones(argv):
   try:
     task = ''.join(argv[1])
     if task in ["create","read","cancel"]:
-      if task == "create":
-        try:
-          file = ''.join(argv[2])
-        except:
-          file = "none"
-      else:
-        try:
-          idTask = ''.join(argv[2])
-        except:
-          idTask = "none"
+        if task == "create":
+          try:
+              file = ''.join(argv[2])
+              f = open(file, 'r')
+          except IOError:
+              print 'Archivo no encontrado.'
+        else:
+            try:
+              idTask = ''.join(argv[2])
+            except:
+              idTask = "none"
     else:
       print(" [.] No existe la tarea con el nombre " + task)
   except:
@@ -62,16 +63,18 @@ class CompressionClient(object):
           elif self.task == "read":
             if props.headers['exist']:
                 print(" [.] La información del archivo con ID:"+ body + " es:")
-                if props.headers['resultQuery']['cancelado']=="true":
-                    print("Nombre: "+str(props.headers['resultQuery']['nombre']))
+                if (str(props.headers['resultQuery']['cancelado'])=='true'):
+                    print("Archivo no comprimido: "+str(props.headers['resultQuery']['archivoComprimido']))
                     print("Cancelado: "+str(props.headers['resultQuery']['cancelado']))
                 else:
-                    print("Nombre: "+str(props.headers['resultQuery']['nombre']))
+                    print("Archivo comprimido: "+str(props.headers['resultQuery']['archivoComprimido']))
                     print("Fecha de creación: "+str(props.headers['resultQuery']['fechaDeCreacion']))
                     print("URL: "+props.headers['resultQuery']['link'])
                     print("Cancelado: "+str(props.headers['resultQuery']['cancelado']))
+            else:
+                print('No existe el archivo con ID:'+body)
           else:
-            print(body)
+            print (body)
           self.response = body
 
     def call(self, task, idTask, filename):
@@ -86,8 +89,7 @@ class CompressionClient(object):
           mensaje=' [x] Enviando archivo con id: '+self.corr_id;
           #buffer archivo
           #file = BUFFER(filename)
-          arch = fs.abspath(fs.cwd()+'/'+filename.replace(' ',''))
-          file = fs.read(arch)
+          file = fs.read(filename)
         elif task == "read":
           queuePriority = "Consulta"
           idRead = idTask
@@ -96,7 +98,6 @@ class CompressionClient(object):
           queuePriority = "High"
           idDelete = idTask
           mensaje=" [x] Enviando archivo a cancelar con id: "+idDelete.replace(' ','')
-
         print(mensaje)
 
         if task == "create":
@@ -105,7 +106,7 @@ class CompressionClient(object):
                                    properties=pika.BasicProperties(
                                          reply_to = self.callback_queue,
                                          correlation_id = self.corr_id,
-                                         headers = {'nameFile': filename.replace(' ','')}
+                                         headers = {'nameFile': filename}
                                          ),
                                    body=file)
         else:
@@ -114,7 +115,7 @@ class CompressionClient(object):
                                    properties=pika.BasicProperties(
                                          reply_to = self.callback_queue,
                                          correlation_id = self.corr_id,
-                                         headers = {'nameFile': filename.replace(' ','')}
+                                         headers = {'nameFile': "archivo no comprimido"}
                                          ),
                                    body=idTask.replace(' ',''))
 
