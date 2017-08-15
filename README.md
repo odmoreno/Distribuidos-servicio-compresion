@@ -7,7 +7,6 @@
 - Tener instalado python o node.js en la computadora cliente, según el cliente que se use.
 - Tener instalado node.js en la computadora servidor.
 - Tener una conexión estable a internet.
-- Colocar el archivo que se desea comprimir en la carpeta donde se encuentra el cliente.SSSSS
 
 ## Ejecución de Clientes
 
@@ -20,7 +19,7 @@ Para instalar las dependencias que pueda tener el cliente Javascript debe  hacer
 ### Create job
 Escribir en la terminal:
 
-		node rpc_client.js create
+		node rpc_client.js create <filename>
 
 ### Read job
 Escribir en la terminal:
