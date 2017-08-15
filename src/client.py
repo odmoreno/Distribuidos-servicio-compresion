@@ -19,6 +19,7 @@ def validaciones(argv):
               file = ''.join(argv[2])
               f = open(file, 'r')
           except IOError:
+              file = "none"
               print 'Archivo no encontrado.'
         else:
             try:
@@ -126,8 +127,11 @@ class CompressionClient(object):
 ############################################################
 compression_rpc = CompressionClient()
 task, idTask, file = validaciones(sys.argv)
-if idTask== "none" or file == "none":
+if idTask== "none" or file == "none" or task == "none":
   print(" [x] Número incorrecto de argumentos. Deben de ser 2.")
+  print("     Vuelva a intentarlo.")
+elif not (task in ["create","read","cancel"]):
+  print(" [x] Vuelva a intentarlo.")
 else:
   response = compression_rpc.call(task, idTask, file)
 print("DONE")
